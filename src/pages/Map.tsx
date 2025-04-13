@@ -8,6 +8,9 @@ import { toast } from 'sonner';
 import { MapPin, Info } from 'lucide-react';
 import LocationCard from '@/components/LocationCard';
 
+// Import Costa Rica map image
+import costaRicaMap from '../assets/costa-rica-map.jpg';
+
 const Map = () => {
   const navigate = useNavigate();
   const { 
@@ -109,8 +112,17 @@ const Map = () => {
         </div>
       )}
 
-      {/* Map visualization (simplified) */}
-      <div className="w-full h-60 bg-costa-blue-light rounded-lg relative mb-4 overflow-hidden">
+      {/* Map visualization with actual Costa Rica map */}
+      <div className="w-full h-60 rounded-lg relative mb-4 overflow-hidden border border-gray-200 shadow-md">
+        {/* Costa Rica Map Background */}
+        <div className="absolute inset-0 bg-costa-blue-light/20">
+          <img 
+            src={costaRicaMap} 
+            alt="Map of Costa Rica" 
+            className="w-full h-full object-cover opacity-80"
+          />
+        </div>
+        
         <div className="absolute inset-0 p-2">
           {/* User location */}
           {userPosition && (
@@ -175,7 +187,6 @@ const Map = () => {
             </div>
           ))}
         </div>
-        <div className="absolute inset-0 bg-blue-500/10"></div>
         <div className="absolute bottom-2 right-2 bg-white p-1 rounded text-xs font-semibold">
           Costa Rica
         </div>
