@@ -12,6 +12,32 @@ import { useRef } from 'react';
 // Import Costa Rica map image
 import costaRicaMap from '../assets/costa-rica-map.jpg';
 
+// Avatar images for simulated Waze-style user markers (you can upload your own images)
+const wazeUserAvatars = [
+  "/placeholder.svg", // Default
+  "https://randomuser.me/api/portraits/men/22.jpg",
+  "https://randomuser.me/api/portraits/women/45.jpg",
+  "https://randomuser.me/api/portraits/men/32.jpg",
+  "https://randomuser.me/api/portraits/women/15.jpg",
+];
+
+// Function to simulate random users on the map
+function getRandomUsersOnMap(count: number) {
+  const users = [];
+  for (let i = 0; i < count; i++) {
+    users.push({
+      id: `sim-user-${i}`,
+      lat: 8.7 + Math.random() * 2,  // these bounds fit CR
+      lng: -85.7 + Math.random() * 2.5,
+      avatar: wazeUserAvatars[(i + 1) % wazeUserAvatars.length],
+      name: `Traveler${i + 1}`,
+    });
+  }
+  return users;
+}
+
+const simulatedWazeUsers = getRandomUsersOnMap(7);
+
 const Map = () => {
   const navigate = useNavigate();
   const { 
@@ -143,6 +169,29 @@ const Map = () => {
             </div>
           )}
           
+          {/* Waze user pins (avatars) */}
+          {simulatedWazeUsers.map((user, i) => (
+            <div
+              key={user.id}
+              className={`absolute flex flex-col items-center z-10 animate-bounce`}
+              style={{
+                left: `${10 + i * 10 + Math.random() * 8}%`,
+                top: `${15 + ((i * 17) % 60) + Math.random() * 6}%`,
+                transition: "top 2s, left 2s"
+              }}
+            >
+              <img
+                src={user.avatar}
+                alt={user.name}
+                className="w-8 h-8 rounded-full border-2 border-costa-green shadow-xl bg-white"
+                title={user.name}
+              />
+              <span className="text-xs bg-costa-green text-white px-2 py-0.5 rounded-full mt-1 shadow">
+                {user.name}
+              </span>
+            </div>
+          ))}
+
           {/* Location pins */}
           {filteredLocations.map((location) => (
             <div 
