@@ -11,6 +11,7 @@ import CoinReward from "@/components/CoinReward";
 
 // Import Costa Rica map image
 import costaRicaMap from '../assets/costa-rica-map.jpg';
+import CostaRicaMap from '@/components/CostaRicaMap';
 
 // Avatar images for simulated Waze-style user markers 
 const wazeUserAvatars = [
@@ -166,6 +167,32 @@ const Map = () => {
     }
   }, []);
 
+  // Instead of pop-up card inline on map, use a callback
+  const renderSelectedLocationCard = (location: any) => (
+    <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-white rounded-lg shadow-lg p-3 w-48 z-20 animate-fade-in">
+      <h4 className="font-medium text-sm">{location.name}</h4>
+      <p className="text-xs text-gray-500 mb-2">{location.type} • {location.pointValue} pts</p>
+      <div className="flex gap-2 mt-2">
+        <Button 
+          size="sm" 
+          className="w-full text-xs" 
+          onClick={() => handleCheckIn(location.id)}
+          disabled={location.visited}
+        >
+          {location.visited ? 'Visited' : 'Check In'}
+        </Button>
+        <Button 
+          size="sm" 
+          variant="outline" 
+          className="w-full text-xs"
+          onClick={() => handleViewDetails(location.id)}
+        >
+          <Info size={12} className="mr-1" /> Info
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="pb-16">
       {/* Coin reward animation */}
@@ -260,121 +287,17 @@ const Map = () => {
         </div>
       )}
 
-      {/* Map visualization with actual Costa Rica map */}
-      <div className="w-full h-60 rounded-lg relative mb-4 overflow-hidden border border-gray-200 shadow-md">
-        {/* Costa Rica Map Background */}
-        <div className="absolute inset-0 bg-costa-blue-light/20">
-          <img 
-            src="https://images.unsplash.com/photo-1482938289607-e9573fc25ebb"
-            alt="Map of Costa Rica" 
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              console.error("Map image failed to load, using fallback");
-              (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1482938289607-e9573fc25ebb";
-            }}
-          />
-        </div>
-        
-        <div className="absolute inset-0 p-2">
-          {/* User location */}
-          {userPosition && (
-            <div 
-              className={"absolute w-4 h-4 bg-blue-500 rounded-full transform -translate-x-1/2 -translate-y-1/2 z-20 animate-pulse"}
-              style={{ 
-                left: `${Math.random() * 80 + 10}%`, 
-                top: `${Math.random() * 80 + 10}%`,
-                boxShadow: planningAdventure || adventureWith ? '0 0 20px 5px #22c55e' : undefined,
-              }}
-              title="Your Position"
-            >
-              <div className={`w-8 h-8 rounded-full absolute -left-2 -top-2 ${planningAdventure || adventureWith ? "bg-green-500/60 animate-pulse" : "bg-blue-500 opacity-30"}`}></div>
-              {planningAdventure || adventureWith ? (
-                <div className="absolute left-1/2 top-full mt-1 -translate-x-1/2 text-xs bg-costa-green text-white px-2 py-0.5 rounded-full font-semibold shadow animate-fade-in">
-                  {adventureWith ? `With ${adventureWith}` : "Ready for adventure!"}
-                </div>
-              ) : null}
-            </div>
-          )}
-
-          {/* Waze user pins (avatars), highlight adventure partner if any */}
-          {simulatedWazeUsers.map((wUser, i) => (
-            <div
-              key={wUser.id}
-              className={`absolute flex flex-col items-center z-10 ${adventureWith === wUser.name ? "animate-pulse" : "animate-bounce"}`}
-              style={{
-                left: `${10 + i * 10 + Math.random() * 8}%`,
-                top: `${15 + ((i * 17) % 60) + Math.random() * 6}%`,
-                transition: "top 2s, left 2s"
-              }}
-            >
-              <img
-                src={wUser.avatar}
-                alt={wUser.name}
-                className={`w-8 h-8 rounded-full border-2 ${adventureWith === wUser.name ? 'border-costa-blue' : 'border-costa-green'} shadow-xl bg-white`}
-                title={wUser.name}
-              />
-              <span className={`text-xs px-2 py-0.5 rounded-full mt-1 shadow
-                ${adventureWith === wUser.name ? "bg-costa-blue text-white font-semibold" : "bg-costa-green text-white"}`}>
-                {wUser.name}
-                {adventureWith === wUser.name && " 🎉"}
-              </span>
-            </div>
-          ))}
-
-          {/* Location pins */}
-          {filteredLocations.map((location) => (
-            <div 
-              key={location.id} 
-              className={`absolute cursor-pointer transform -translate-x-1/2 -translate-y-1/2 ${
-                selectedLocation === location.id ? 'z-10' : 'z-0'
-              }`}
-              style={{ 
-                left: `${Math.random() * 80 + 10}%`, 
-                top: `${Math.random() * 80 + 10}%` 
-              }}
-              onClick={() => handleLocationClick(location.id)}
-            >
-              <div className={`
-                p-1 rounded-full
-                ${location.visited 
-                  ? 'bg-costa-earth-clay text-white' 
-                  : 'bg-costa-green text-white animate-bounce-gentle'}
-              `}>
-                <MapPin size={selectedLocation === location.id ? 24 : 20} />
-              </div>
-              
-              {/* Pop-up info card when selected */}
-              {selectedLocation === location.id && (
-                <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-white rounded-lg shadow-lg p-3 w-48 z-20 animate-fade-in">
-                  <h4 className="font-medium text-sm">{location.name}</h4>
-                  <p className="text-xs text-gray-500 mb-2">{location.type} • {location.pointValue} pts</p>
-                  <div className="flex gap-2 mt-2">
-                    <Button 
-                      size="sm" 
-                      className="w-full text-xs" 
-                      onClick={() => handleCheckIn(location.id)}
-                      disabled={location.visited}
-                    >
-                      {location.visited ? 'Visited' : 'Check In'}
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      className="w-full text-xs"
-                      onClick={() => handleViewDetails(location.id)}
-                    >
-                      <Info size={12} className="mr-1" /> Info
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-        <div className="absolute bottom-2 right-2 bg-white p-1 rounded text-xs font-semibold">
-          Costa Rica
-        </div>
-      </div>
+      {/* -- MAP AREA -- */}
+      <CostaRicaMap
+        userPosition={userPosition}
+        planningAdventure={planningAdventure}
+        adventureWith={adventureWith}
+        simulatedWazeUsers={simulatedWazeUsers}
+        filteredLocations={filteredLocations}
+        selectedLocation={selectedLocation}
+        handleLocationClick={handleLocationClick}
+        renderSelectedLocationCard={renderSelectedLocationCard}
+      />
 
       {/* Nearby locations */}
       <h2 className="font-semibold text-lg mb-2">Nearby Adventures</h2>
