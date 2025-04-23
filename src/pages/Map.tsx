@@ -1,18 +1,18 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useGame } from '@/context/GameContext';
 import { toast } from 'sonner';
-import { MapPin, Info } from 'lucide-react';
+import { MapPin, Info, Navigation } from 'lucide-react';
 import LocationCard from '@/components/LocationCard';
 import CoinReward from "@/components/CoinReward";
-import { useRef } from 'react';
 
 // Import Costa Rica map image
 import costaRicaMap from '../assets/costa-rica-map.jpg';
 
-// Avatar images for simulated Waze-style user markers (you can upload your own images)
+// Avatar images for simulated Waze-style user markers 
 const wazeUserAvatars = [
   "/placeholder.svg", // Default
   "https://randomuser.me/api/portraits/men/22.jpg",
@@ -53,6 +53,7 @@ const Map = () => {
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [userPosition, setUserPosition] = useState<{lat: number, lng: number} | null>(null);
   const [showCoin, setShowCoin] = useState(false);
+  const [showDirections, setShowDirections] = useState(true);
 
   // Filter locations based on selectedRegions and selectedTypes
   useEffect(() => {
@@ -83,6 +84,7 @@ const Map = () => {
 
   const handleLocationClick = (locationId: string) => {
     setSelectedLocation(prev => prev === locationId ? null : locationId);
+    setShowDirections(false);
   };
 
   const handleCheckIn = (locationId: string) => {
@@ -94,6 +96,12 @@ const Map = () => {
       checkInLocation(locationId);
       setSelectedLocation(null);
       setShowCoin(true);
+      
+      // Play sound when coin appears
+      const audio = new Audio('/coin-reward.mp3');
+      audio.volume = 0.5;
+      audio.play().catch(err => console.log("Audio play failed:", err));
+      
       toast.success("Check-in successful!", {
         description: "You've earned points for visiting this location.",
       });
@@ -107,6 +115,19 @@ const Map = () => {
   const handleViewDetails = (locationId: string) => {
     navigate(`/quest/${locationId}`);
   };
+
+  const dismissDirections = () => {
+    setShowDirections(false);
+    localStorage.setItem('mapDirectionsShown', 'true');
+  };
+
+  // Check if directions were already shown
+  useEffect(() => {
+    const directionsShown = localStorage.getItem('mapDirectionsShown');
+    if (directionsShown) {
+      setShowDirections(false);
+    }
+  }, []);
 
   return (
     <div className="pb-16">
@@ -144,14 +165,37 @@ const Map = () => {
         </div>
       )}
 
+      {/* User directions overlay */}
+      {showDirections && (
+        <div className="absolute inset-x-0 top-32 z-30 bg-costa-blue/90 text-white p-4 rounded-md shadow-lg mx-4 animate-fade-in">
+          <div className="flex items-start">
+            <Navigation className="mr-2 mt-1 flex-shrink-0" />
+            <div>
+              <h3 className="font-bold mb-2">How to use the map:</h3>
+              <ul className="text-sm space-y-2 mb-3">
+                <li className="flex items-center"><span className="mr-2">•</span> Tap on a location pin <MapPin className="inline mx-1 h-4 w-4" /> to see details</li>
+                <li className="flex items-center"><span className="mr-2">•</span> Use "Check In" when you're physically at a location</li>
+                <li className="flex items-center"><span className="mr-2">•</span> Visit the "Info" page to learn about quests</li>
+                <li className="flex items-center"><span className="mr-2">•</span> Other travelers <img src={wazeUserAvatars[1]} className="inline h-4 w-4 rounded-full mx-1" /> are exploring too!</li>
+              </ul>
+              <Button size="sm" onClick={dismissDirections} className="w-full">Got it</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Map visualization with actual Costa Rica map */}
       <div className="w-full h-60 rounded-lg relative mb-4 overflow-hidden border border-gray-200 shadow-md">
         {/* Costa Rica Map Background */}
         <div className="absolute inset-0 bg-costa-blue-light/20">
           <img 
-            src={costaRicaMap} 
+            src="https://images.unsplash.com/photo-1482938289607-e9573fc25ebb"
             alt="Map of Costa Rica" 
-            className="w-full h-full object-cover opacity-80"
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              console.error("Map image failed to load, using fallback");
+              (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1482938289607-e9573fc25ebb";
+            }}
           />
         </div>
         
