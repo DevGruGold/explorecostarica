@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Card, 
   CardContent, 
@@ -19,6 +18,12 @@ import { motion } from 'framer-motion';
 const Achievements = () => {
   const { badges, user } = useGame();
   const [selectedBadge, setSelectedBadge] = useState<string | null>(null);
+  const [justUnlocked, setJustUnlocked] = useState<string | null>(null);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => setJustUnlocked(null), 1400);
+    return () => clearTimeout(timeout);
+  }, [justUnlocked]);
   
   const unlockedBadges = badges.filter(badge => badge.isUnlocked);
   const lockedBadges = badges.filter(badge => !badge.isUnlocked);
@@ -69,14 +74,16 @@ const Achievements = () => {
           {unlockedBadges.map(badge => (
             <motion.div
               key={badge.id}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.97 }}
               className="cursor-pointer"
               onClick={() => setSelectedBadge(badge.id)}
+              animate={justUnlocked === badge.id ? { scale: [1.5, 1], rotate: [0, 15, -15, 0], filter: "drop-shadow(0 0 18px #fef7cd)" } : undefined}
+              transition={{ duration: 0.8 }}
             >
               <Card className="border-costa-green/20 h-28 flex flex-col items-center justify-center text-center p-2">
                 <div className="w-12 h-12 rounded-full bg-costa-green/10 flex items-center justify-center mb-2">
-                  <Award className="h-6 w-6 text-costa-green" />
+                  <Award className="h-6 w-6 text-costa-green animate-pulse" />
                 </div>
                 <p className="text-xs font-medium line-clamp-2">{badge.name}</p>
               </Card>

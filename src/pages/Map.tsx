@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,8 @@ import { useGame } from '@/context/GameContext';
 import { toast } from 'sonner';
 import { MapPin, Info } from 'lucide-react';
 import LocationCard from '@/components/LocationCard';
+import CoinReward from "@/components/CoinReward";
+import { useRef } from 'react';
 
 // Import Costa Rica map image
 import costaRicaMap from '../assets/costa-rica-map.jpg';
@@ -25,6 +26,7 @@ const Map = () => {
   const [filteredLocations, setFilteredLocations] = useState(locations);
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [userPosition, setUserPosition] = useState<{lat: number, lng: number} | null>(null);
+  const [showCoin, setShowCoin] = useState(false);
 
   // Filter locations based on selectedRegions and selectedTypes
   useEffect(() => {
@@ -65,6 +67,7 @@ const Map = () => {
     if (shouldSucceed) {
       checkInLocation(locationId);
       setSelectedLocation(null);
+      setShowCoin(true);
       toast.success("Check-in successful!", {
         description: "You've earned points for visiting this location.",
       });
@@ -81,6 +84,9 @@ const Map = () => {
 
   return (
     <div className="pb-16">
+      {/* Coin reward animation */}
+      <CoinReward visible={showCoin} onDone={() => setShowCoin(false)} amount={50} />
+
       <div className="flex justify-between items-center mb-4">
         <div>
           <h1 className="text-2xl font-bold text-costa-green">Explore Costa Rica</h1>

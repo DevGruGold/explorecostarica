@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -21,6 +20,7 @@ import {
 import { useGame } from '@/context/GameContext';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
+import CoinReward from '@/components/CoinReward';
 
 const Quest = () => {
   const { id } = useParams();
@@ -28,6 +28,7 @@ const Quest = () => {
   const { locations, checkInLocation, completeActivity } = useGame();
   const [showPhotoConfirm, setShowPhotoConfirm] = useState(false);
   const [showJournalConfirm, setShowJournalConfirm] = useState(false);
+  const [showCoin, setShowCoin] = useState(false);
   
   const location = locations.find(loc => loc.id === id);
   
@@ -54,6 +55,7 @@ const Quest = () => {
     // Simulate photo submission success
     setTimeout(() => {
       toast.success("Photo uploaded successfully!");
+      setShowCoin(true);
       handleCompleteActivity(activityId);
     }, 500);
   };
@@ -64,12 +66,14 @@ const Quest = () => {
     // Simulate journal submission success
     setTimeout(() => {
       toast.success("Journal entry saved!");
+      setShowCoin(true);
       handleCompleteActivity(activityId);
     }, 500);
   };
 
   return (
     <div className="pb-16">
+      <CoinReward visible={showCoin} onDone={() => setShowCoin(false)} amount={25} />
       <Button 
         variant="ghost" 
         className="mb-4 pl-0" 
