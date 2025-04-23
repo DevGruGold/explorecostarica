@@ -1,11 +1,11 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useGame } from '@/context/GameContext';
 import { toast } from 'sonner';
-import { MapPin, Info, Navigation } from 'lucide-react';
+import { MapPin, Info, Navigation, Users } from 'lucide-react';
 import LocationCard from '@/components/LocationCard';
 import CoinReward from "@/components/CoinReward";
 
@@ -49,6 +49,12 @@ const Map = () => {
     selectedTypes 
   } = useGame();
 
+  // --- NEW: Spontaneous Adventure UI State ---
+  const [planningAdventure, setPlanningAdventure] = useState(false);
+  const [seeAdventureInvite, setSeeAdventureInvite] = useState(false);
+  const [adventureWith, setAdventureWith] = useState<string | null>(null);
+
+  // ========== (rest of map state)
   const [filteredLocations, setFilteredLocations] = useState(locations);
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [userPosition, setUserPosition] = useState<{lat: number, lng: number} | null>(null);
@@ -81,6 +87,37 @@ const Map = () => {
     
     simulateUserPosition();
   }, []);
+
+  // When user starts a spontaneous adventure: tell other users (simulate only on UI)
+  const handleAdventureClick = () => {
+    setPlanningAdventure(true);
+    toast("You're looking for an adventure buddy!", {
+      description: "Other users can now join your spontaneous adventure.",
+      icon: <Users className="w-5 h-5 text-costa-green" />
+    });
+    // Simulate a delay for another user "seeing" your invite
+    setTimeout(() => setSeeAdventureInvite(true), 1500);
+  };
+
+  // Handle other user accepting adventure (simulated)
+  const handleJoinAdventure = () => {
+    setAdventureWith("Traveler2");
+    setSeeAdventureInvite(false);
+    toast("You joined an adventure with Traveler2! 🎉", {
+      description: "Chat and meet up somewhere fun, or check in together.",
+      icon: <Users className="w-5 h-5 text-costa-green" />
+    });
+  };
+
+  // Leave/disband
+  const handleEndAdventure = () => {
+    setPlanningAdventure(false);
+    setAdventureWith(null);
+    setSeeAdventureInvite(false);
+    toast("Adventure ended", {
+      description: "Feel free to start a new one anytime!",
+    });
+  };
 
   const handleLocationClick = (locationId: string) => {
     setSelectedLocation(prev => prev === locationId ? null : locationId);
@@ -134,6 +171,44 @@ const Map = () => {
       {/* Coin reward animation */}
       <CoinReward visible={showCoin} onDone={() => setShowCoin(false)} amount={50} />
 
+      {/* Spontaneous Adventure Button, visible at all times */}
+      <div className="flex justify-end items-center gap-2 mb-2">
+        {/* Show leave/stop if in adventure */}
+        {planningAdventure && !adventureWith && (
+          <Badge className="bg-costa-green/90 px-3 py-1 animate-pulse">Waiting for buddy...</Badge>
+        )}
+        {adventureWith && (
+          <Badge className="bg-costa-blue/90 px-3 py-1">Paired with <span className="ml-1 font-semibold">{adventureWith}</span></Badge>
+        )}
+        {planningAdventure || adventureWith ? (
+          <Button variant="destructive" size="sm" onClick={handleEndAdventure}>End Adventure</Button>
+        ) : (
+          <Popover open={seeAdventureInvite} onOpenChange={setSeeAdventureInvite}>
+            <PopoverTrigger asChild>
+              <Button
+                size="sm"
+                className="bg-costa-green text-white hover:bg-costa-green/90 shadow-lg animate-fade-in"
+                onClick={handleAdventureClick}
+              >
+                <Users className="mr-1 h-5 w-5" />
+                Spontaneous Adventure
+              </Button>
+            </PopoverTrigger>
+            {/* Popover appears when another user "sees" your request */}
+            <PopoverContent side="bottom" className="max-w-xs w-full z-40">
+              <div className="flex items-start gap-2">
+                <img src={wazeUserAvatars[2]} alt="Traveler2" className="w-10 h-10 rounded-full border-2 border-costa-blue shadow" />
+                <div>
+                  <h4 className="font-bold mb-1">Traveler2 wants to join!</h4>
+                  <p className="text-sm mb-2">"Hey, let's team up and visit someplace cool right now?"</p>
+                  <Button size="sm" className="w-full" onClick={handleJoinAdventure}>Accept & Start</Button>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        )}
+      </div>
+
       <div className="flex justify-between items-center mb-4">
         <div>
           <h1 className="text-2xl font-bold text-costa-green">Explore Costa Rica</h1>
@@ -177,6 +252,7 @@ const Map = () => {
                 <li className="flex items-center"><span className="mr-2">•</span> Use "Check In" when you're physically at a location</li>
                 <li className="flex items-center"><span className="mr-2">•</span> Visit the "Info" page to learn about quests</li>
                 <li className="flex items-center"><span className="mr-2">•</span> Other travelers <img src={wazeUserAvatars[1]} className="inline h-4 w-4 rounded-full mx-1" /> are exploring too!</li>
+                <li className="flex items-center"><span className="mr-2">•</span> NEW: Tap <Users className="inline h-4 w-4 mx-1" /> Spontaneous Adventure to find a buddy right now!</li>
               </ul>
               <Button size="sm" onClick={dismissDirections} className="w-full">Got it</Button>
             </div>
@@ -203,21 +279,28 @@ const Map = () => {
           {/* User location */}
           {userPosition && (
             <div 
-              className="absolute w-4 h-4 bg-blue-500 rounded-full transform -translate-x-1/2 -translate-y-1/2 z-20 animate-pulse"
+              className={"absolute w-4 h-4 bg-blue-500 rounded-full transform -translate-x-1/2 -translate-y-1/2 z-20 animate-pulse"}
               style={{ 
                 left: `${Math.random() * 80 + 10}%`, 
-                top: `${Math.random() * 80 + 10}%` 
+                top: `${Math.random() * 80 + 10}%`,
+                boxShadow: planningAdventure || adventureWith ? '0 0 20px 5px #22c55e' : undefined,
               }}
+              title="Your Position"
             >
-              <div className="w-8 h-8 bg-blue-500 rounded-full opacity-30 absolute -left-2 -top-2"></div>
+              <div className={`w-8 h-8 rounded-full absolute -left-2 -top-2 ${planningAdventure || adventureWith ? "bg-green-500/60 animate-pulse" : "bg-blue-500 opacity-30"}`}></div>
+              {planningAdventure || adventureWith ? (
+                <div className="absolute left-1/2 top-full mt-1 -translate-x-1/2 text-xs bg-costa-green text-white px-2 py-0.5 rounded-full font-semibold shadow animate-fade-in">
+                  {adventureWith ? `With ${adventureWith}` : "Ready for adventure!"}
+                </div>
+              ) : null}
             </div>
           )}
-          
-          {/* Waze user pins (avatars) */}
-          {simulatedWazeUsers.map((user, i) => (
+
+          {/* Waze user pins (avatars), highlight adventure partner if any */}
+          {simulatedWazeUsers.map((wUser, i) => (
             <div
-              key={user.id}
-              className={`absolute flex flex-col items-center z-10 animate-bounce`}
+              key={wUser.id}
+              className={`absolute flex flex-col items-center z-10 ${adventureWith === wUser.name ? "animate-pulse" : "animate-bounce"}`}
               style={{
                 left: `${10 + i * 10 + Math.random() * 8}%`,
                 top: `${15 + ((i * 17) % 60) + Math.random() * 6}%`,
@@ -225,13 +308,15 @@ const Map = () => {
               }}
             >
               <img
-                src={user.avatar}
-                alt={user.name}
-                className="w-8 h-8 rounded-full border-2 border-costa-green shadow-xl bg-white"
-                title={user.name}
+                src={wUser.avatar}
+                alt={wUser.name}
+                className={`w-8 h-8 rounded-full border-2 ${adventureWith === wUser.name ? 'border-costa-blue' : 'border-costa-green'} shadow-xl bg-white`}
+                title={wUser.name}
               />
-              <span className="text-xs bg-costa-green text-white px-2 py-0.5 rounded-full mt-1 shadow">
-                {user.name}
+              <span className={`text-xs px-2 py-0.5 rounded-full mt-1 shadow
+                ${adventureWith === wUser.name ? "bg-costa-blue text-white font-semibold" : "bg-costa-green text-white"}`}>
+                {wUser.name}
+                {adventureWith === wUser.name && " 🎉"}
               </span>
             </div>
           ))}
